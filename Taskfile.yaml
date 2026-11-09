@@ -1,0 +1,7 @@
+version: "3"
+
+tasks:
+  test:
+    desc: Run the plenary.nvim test suite (bootstraps plenary on first run)
+    cmds:
+      - ./tests/run_tests.sh
