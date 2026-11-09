@@ -186,4 +186,14 @@ function M.operatorfunc()
 	M.format_range(vim.fn.line("'["), vim.fn.line("']"))
 end
 
+--- True when any of `lines` starts a list item (bullet or numbered).
+function M.has_list(lines)
+	for _, line in ipairs(lines) do
+		if list_prefix(line) ~= nil then
+			return true
+		end
+	end
+	return false
+end
+
 return M

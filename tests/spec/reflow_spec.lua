@@ -13,6 +13,20 @@ local function get_lines(buf)
   return vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 end
 
+describe("has_list", function()
+  local reflow = require("nvim-md-list-reflow.reflow")
+
+  it("detects bullet and numbered items", function()
+    assert.is_true(reflow.has_list({ "prose", "- item" }))
+    assert.is_true(reflow.has_list({ "  1. item" }))
+    assert.is_true(reflow.has_list({ "2) item" }))
+  end)
+
+  it("ignores prose and bare numbers", function()
+    assert.is_false(reflow.has_list({ "prose", "2026 was a year", "" }))
+  end)
+end)
+
 describe("format_range", function()
   it("wraps a bullet item with a hanging indent", function()
     with_buf({

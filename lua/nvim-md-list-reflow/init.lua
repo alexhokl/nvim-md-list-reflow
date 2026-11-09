@@ -19,21 +19,43 @@ local function set_operatorfunc()
 	return "g@"
 end
 
-local function map_buffer(bufnr, keymap)
-	local opts = {
-		noremap = true,
-		silent = true,
-		desc = "Reflow markdown list (bullet/numbered)",
-		buffer = bufnr,
-		expr = true,
-	}
-	vim.keymap.set("n", keymap, set_operatorfunc, opts)
-	vim.keymap.set("x", keymap, set_operatorfunc, opts)
+--- `formatexpr` target used when `override_gq` is enabled. Ranges with a
+--- list item are reflowed by the plugin; anything else (and auto-wrap
+--- while typing in insert mode) returns 1 so Vim formats internally.
+function M.formatexpr()
+	if vim.v.char ~= "" then
+		return 1
+	end
+	local first = vim.v.lnum
+	local last = first + vim.v.count - 1
+	local lines = vim.api.nvim_buf_get_lines(0, first - 1, last, false)
+	if not reflow.has_list(lines) then
+		return 1
+	end
+	reflow.format_range(first, last)
+	return 0
+end
+
+local function attach(bufnr, opts)
+	if opts.keymap then
+		local map_opts = {
+			noremap = true,
+			silent = true,
+			desc = "Reflow markdown list (bullet/numbered)",
+			buffer = bufnr,
+			expr = true,
+		}
+		vim.keymap.set("n", opts.keymap, set_operatorfunc, map_opts)
+		vim.keymap.set("x", opts.keymap, set_operatorfunc, map_opts)
+	end
+	if opts.override_gq then
+		vim.bo[bufnr].formatexpr = "v:lua.require'nvim-md-list-reflow'.formatexpr()"
+	end
 end
 
 function M.setup(opts)
 	opts = config.merge(opts)
-	if not opts.keymap then
+	if not opts.keymap and not opts.override_gq then
 		return
 	end
 
@@ -42,7 +64,7 @@ function M.setup(opts)
 		group = group,
 		pattern = opts.ft,
 		callback = function(args)
-			map_buffer(args.buf, opts.keymap)
+			attach(args.buf, opts)
 		end,
 	})
 
@@ -50,7 +72,7 @@ function M.setup(opts)
 	-- already fired, so map buffers that already match.
 	for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
 		if vim.api.nvim_buf_is_loaded(bufnr) and vim.tbl_contains(opts.ft, vim.bo[bufnr].filetype) then
-			map_buffer(bufnr, opts.keymap)
+			attach(bufnr, opts)
 		end
 	end
 end

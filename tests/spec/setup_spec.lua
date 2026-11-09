@@ -56,6 +56,81 @@ describe("setup", function()
     assert.is_false(has_map(buf, "x", "<leader>gq"))
   end)
 
+  it("leaves formatexpr alone by default", function()
+    M.setup({})
+    local buf = new_buf("markdown")
+    assert.are.equal("", vim.bo[buf].formatexpr)
+  end)
+
+  it("sets formatexpr on markdown buffers when override_gq is on", function()
+    M.setup({ override_gq = true })
+    local md = new_buf("markdown")
+    local txt = new_buf("text")
+    assert.are.equal("v:lua.require'nvim-md-list-reflow'.formatexpr()", vim.bo[md].formatexpr)
+    assert.are.equal("", vim.bo[txt].formatexpr)
+  end)
+
+  it("supports override_gq without a keymap", function()
+    M.setup({ keymap = false, override_gq = true })
+    local buf = new_buf("markdown")
+    assert.are_not.equal("", vim.bo[buf].formatexpr)
+    assert.is_false(has_map(buf, "n", "<leader>gq"))
+  end)
+
+  describe("with override_gq", function()
+    local function gq_buf(lines)
+      M.setup({ keymap = false, override_gq = true })
+      local buf = new_buf("markdown")
+      vim.bo[buf].textwidth = 40
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+      vim.api.nvim_win_set_cursor(0, { 1, 0 })
+      return buf
+    end
+
+    it("reflows lists with gq", function()
+      local buf = gq_buf({
+        "- one two three four five six seven eight nine ten eleven",
+      })
+      vim.api.nvim_feedkeys("gqip", "x", false)
+      assert.are.same({
+        "- one two three four five six seven",
+        "  eight nine ten eleven",
+      }, vim.api.nvim_buf_get_lines(buf, 0, -1, false))
+    end)
+
+    it("falls back to the built-in gq for non-list text", function()
+      local prose = {
+        "plain prose that is long enough to need wrapping by gq",
+        "  and a second line with a different indent",
+      }
+      local buf = gq_buf(prose)
+      vim.api.nvim_feedkeys("gqip", "x", false)
+      local got = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+      vim.bo[buf].formatexpr = ""
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, prose)
+      vim.api.nvim_win_set_cursor(0, { 1, 0 })
+      vim.cmd("normal! gqip")
+      assert.are.same(vim.api.nvim_buf_get_lines(buf, 0, -1, false), got)
+    end)
+
+    it("repeats gqq with .", function()
+      local buf = gq_buf({
+        "- one two three four five six seven eight nine ten eleven",
+        "1. one two three four five six seven eight nine ten",
+      })
+      vim.api.nvim_feedkeys("gqq", "x", false)
+      vim.api.nvim_win_set_cursor(0, { 3, 0 })
+      vim.api.nvim_feedkeys(".", "x", false)
+      assert.are.same({
+        "- one two three four five six seven",
+        "  eight nine ten eleven",
+        "1. one two three four five six seven",
+        "   eight nine ten",
+      }, vim.api.nvim_buf_get_lines(buf, 0, -1, false))
+    end)
+  end)
+
   it("reflows the motion target through the mapping", function()
     M.setup({ keymap = ",q" })
     local buf = new_buf("markdown")

@@ -9,7 +9,7 @@ manager at this directory.
 
 | File | Purpose |
 |---|---|
-| `lua/nvim-md-list-reflow/init.lua` | `setup()`, keymaps (operator pattern via `g@`), public API |
+| `lua/nvim-md-list-reflow/init.lua` | `setup()`, keymaps (operator pattern via `g@`), `formatexpr()` for `override_gq`, public API |
 | `lua/nvim-md-list-reflow/reflow.lua` | Segmenting, joining, `gq` reflow and hanging indent |
 | `lua/nvim-md-list-reflow/config.lua` | Defaults and option merging |
 

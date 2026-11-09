@@ -53,12 +53,34 @@ becomes (with `textwidth=40`)
 
 ```lua
 require("nvim-md-list-reflow").setup({
-  keymap = "<leader>gq", -- set to false to skip creating the mapping
-  ft     = { "markdown" },
+  keymap      = "<leader>gq", -- set to false to skip creating the mapping
+  ft          = { "markdown" },
+  override_gq = false,        -- make the built-in `gq` reflow lists too
 })
 ```
 
 All options are optional; the values above are the defaults.
+
+### Overriding `gq`
+
+With `override_gq = true` the plugin sets a buffer-local `formatexpr`, so plain
+`gq` (`gq{motion}`, visual `gq`, `gqq`, counts and `.`) reflows lists the same
+way as the mapping.
+
+- Ranges without a bullet or numbered item fall back to the built-in `gq`.
+- Auto-wrap while typing (`formatoptions+=t`) and `gw` always use Vim's
+  internal formatter.
+- Neovim's LSP only sets `formatexpr` when it is empty, so the plugin's value
+  wins. A `setlocal formatexpr=...` of your own (for example in an LSP
+  `on_attach`) replaces it.
+
+```lua
+{
+  "alexhokl/nvim-md-list-reflow",
+  ft = "markdown",
+  opts = { keymap = false, override_gq = true }, -- gq only, no extra mapping
+}
+```
 
 ### API
 
