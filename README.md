@@ -91,10 +91,16 @@ require("nvim-md-list-reflow").format_range(10, 20)
 
 ## Tests
 
-Uses [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) as a test
-harness. Plenary is vendored on first run under `tests/.deps/` (which is
-gitignored), so the test suite is self-contained and CI-friendly.
+Uses the Nvim plugin test harness (`:help dev-test-plugin`). `Makefile` is
+a copy of `contrib/plugin_test.mk` from the Neovim repository. On first run,
+`make test` downloads the harness modules into `.deps/` (gitignored). Each
+test runs against a fresh Nvim.
 
 ```
 task test
+task test-file -- test/reflow_spec.lua
+make test NVIM_PRG=/path/to/nvim NVIM_TEST_VERSION=master
 ```
+
+`NVIM_TEST_VERSION` (default `master`) should match the Nvim under test.
+Remove `.deps/` to download the harness again.

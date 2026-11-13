@@ -2,6 +2,11 @@ version: "3"
 
 tasks:
   test:
-    desc: Run the plenary.nvim test suite (bootstraps plenary on first run)
+    desc: "Run all tests with the Nvim test harness (see Makefile)"
     cmds:
-      - ./tests/run_tests.sh
+      - make test
+
+  test-file:
+    desc: "Run a single spec file: task test-file -- test/reflow_spec.lua"
+    cmds:
+      - make test TEST_FILE={{.CLI_ARGS}}

@@ -15,18 +15,26 @@ manager at this directory.
 
 ## Testing
 
-Framework: plenary.nvim (busted-style), run headless in a real Neovim because
-reflow relies on the built-in `gq` and `textwidth`.
+Framework: the Nvim plugin test harness (`:help dev-test-plugin`), run in a
+real Neovim because reflow relies on the built-in `gq` and `textwidth`.
+`Makefile` is a copy of `contrib/plugin_test.mk` from the Neovim repository.
 
 ```bash
-task test   # bootstraps plenary into tests/.deps/ on first run
+task test                                # downloads the harness into .deps/ on first run
+task test-file -- test/reflow_spec.lua   # = make test TEST_FILE=...
+make test TEST_FILTER='reflows lists'    # filter by test name
 ```
 
-`tests/minimal_init.lua` removes the user's config directory from the
-runtimepath so personal ftplugins/keymaps don't leak into the tests.
+- Specs live in `test/*_spec.lua` and use `require('test.testutil')` (`t`)
+  and `require('test.functional.testnvim')()` (`n`).
+- Each `n.clear()` starts a fresh child Nvim with `--clean`, so the user's
+  config never leaks in; `before_each` appends `getcwd()` to `runtimepath`.
+- Functions passed to `n.exec_lua` run in the child: pass data as arguments,
+  not upvalues, and return only serializable values.
+- Use `n.feed()` for keymaps and normal-mode commands.
 
 ## Conventions
 
-- Plugin code under `lua/` uses tabs; specs under `tests/` use 2 spaces.
+- Plugin code under `lua/` uses tabs; specs under `test/` use 2 spaces.
 - Use `vim.notify()` with a log level for user-facing messages, never `print()`.
 - Keep all buffer changes from one reflow in one undo block (`undojoin`).
